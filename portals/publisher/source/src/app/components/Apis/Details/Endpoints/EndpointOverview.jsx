@@ -73,10 +73,6 @@ const styles = (theme) => ({
         display: 'flex',
         alignItems: 'center',
     },
-    radioGroup: {
-        display: 'flex',
-        flexDirection: 'row',
-    },
     endpointsWrapperLeft: {
         padding: theme.spacing(1),
         borderRight: '#c4c4c4',
@@ -112,6 +108,12 @@ const styles = (theme) => ({
     },
     button: {
         textTransform: 'none',
+    },
+    overviewWrapper: {
+        paddingTop: theme.spacing(1),
+    },
+    configurations: {
+        paddingTop: theme.spacing(1),
     },
 });
 
@@ -592,36 +594,39 @@ function EndpointOverview(props) {
 
     return (
         <div className={classes.overviewWrapper}>
-            <Grid container spacing={2}>
-                <Grid item xs={12}>
+            <Grid container direction='column'>
+                <Grid item xs={12} container direction='column'>
                     {api.type === 'WS' ? <div /> : (
-                        <FormControl component='fieldset' className={classes.formControl}>
-                            <RadioGroup
-                                aria-label='EndpointType'
-                                name='endpointType'
-                                className={classes.radioGroup}
-                                value={endpointType.key}
-                                onChange={handleEndpointTypeSelect}
-                            >
-                                {supportedEnpointTypes.map((endpoint) => {
-                                    return (
-                                        <FormControlLabel
-                                            value={endpoint.key}
-                                            control={(
-                                                <Radio
-                                                    disabled={(isRestricted(['apim:api_create'], api))}
-                                                    color='primary'
-                                                />
-                                            )}
-                                            label={endpoint.value}
-                                        />
-                                    );
-                                })}
-                            </RadioGroup>
-                        </FormControl>
+                        <div>
+                            <FormControl component='fieldset'>
+                                <RadioGroup
+                                    aria-label='EndpointType'
+                                    name='endpointType'
+                                    value={endpointType.key}
+                                    onChange={handleEndpointTypeSelect}
+                                    row
+                                >
+                                    {supportedEnpointTypes.map((endpoint) => {
+                                        return (
+                                            <FormControlLabel
+                                                key={endpoint.key}
+                                                value={endpoint.key}
+                                                control={(
+                                                    <Radio
+                                                        disabled={(isRestricted(['apim:api_create'], api))}
+                                                        color='primary'
+                                                    />
+                                                )}
+                                                label={endpoint.value}
+                                            />
+                                        );
+                                    })}
+                                </RadioGroup>
+                            </FormControl>
+                        </div>
                     )}
                 </Grid>
-                <Grid item xs={12}>
+                <Grid item xs={12} container direction='column'>
                     {endpointType.key === 'INLINE' ? iff(Object.keys(swaggerDef.paths).length !== 0,
                         <InlineEndpoints paths={swaggerDef.paths} updatePaths={updatePaths} />, <Progress />)
                         : (
@@ -902,7 +907,7 @@ function EndpointOverview(props) {
                     || api.type === 'WS'
                     ? <div />
                     : (
-                        <Grid item xs={12}>
+                        <Grid item xs={12} className={classes.configurations}>
                             <Typography variant='h4' align='left' className={classes.titleWrapper} gutterBottom>
                                 <FormattedMessage
                                     id='Apis.Details.Endpoints.EndpointOverview.general.config.header'
@@ -924,7 +929,7 @@ function EndpointOverview(props) {
                         || endpointType.key === 'awslambda'
                         ? <div />
                         : (
-                            <Grid item xs={12}>
+                            <Grid item xs={12} className={classes.configurations}>
                                 <Typography
                                     variant='h4'
                                     align='left'

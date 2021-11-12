@@ -1162,16 +1162,16 @@
     "defaultMessage": "Create Documents"
   },
   "Apis.Details.Documents.Listing.column.header.action": {
-    "defaultMessage": "action"
+    "defaultMessage": "Action"
   },
   "Apis.Details.Documents.Listing.column.header.name": {
-    "defaultMessage": "name"
+    "defaultMessage": "Name"
   },
   "Apis.Details.Documents.Listing.column.header.source.type": {
-    "defaultMessage": "sourceType"
+    "defaultMessage": "Source Type"
   },
   "Apis.Details.Documents.Listing.column.header.type": {
-    "defaultMessage": "type"
+    "defaultMessage": "Type"
   },
   "Apis.Details.Documents.Listing.documents.listing.fetching.error.message": {
     "defaultMessage": "Error in fetching documents list of the API"
@@ -2471,6 +2471,27 @@
   },
   "Apis.Details.Resources.APIOperations.title": {
     "defaultMessage": "Resources"
+  },
+  "Apis.Details.Resources.OperationMediation.requestMediation.addPolicy": {
+    "defaultMessage": "Add Request Policy"
+  },
+  "Apis.Details.Resources.OperationMediation.requestMediation.title": {
+    "defaultMessage": "Request Mediation Policies"
+  },
+  "Apis.Details.Resources.OperationMediation.requestMediation.tooltip": {
+    "defaultMessage": "Manage request mediation policies that are local to this resource"
+  },
+  "Apis.Details.Resources.OperationMediation.responseMediation.addPolicy": {
+    "defaultMessage": "Add Response Policy"
+  },
+  "Apis.Details.Resources.OperationMediation.responseMediation.title": {
+    "defaultMessage": "Response Mediation Policies"
+  },
+  "Apis.Details.Resources.OperationMediation.responseMediation.tooltip": {
+    "defaultMessage": "Manage response mediation policies that are local to this resource"
+  },
+  "Apis.Details.Resources.OperationMediation.title": {
+    "defaultMessage": "Operation Mediation"
   },
   "Apis.Details.Resources.Resources.api.scope.deleted.successfully": {
     "defaultMessage": "API Scope deleted successfully!"
@@ -3908,6 +3929,45 @@
   },
   "ServiceCatalog.ServicesTableView.ServicesTableView.version": {
     "defaultMessage": "Version"
+  },
+  "Temp.Apis.Details.Endpoints.Endpoints.endpoints.header": {
+    "defaultMessage": "API Endpoint"
+  },
+  "Temp.aApis.Details.Endpoints.Endpoints.endpoints.header": {
+    "defaultMessage": "Primary endpoint of the API"
+  },
+  "Temp.bApis.Details.Endpoints.Endpoints.endpoints.header": {
+    "defaultMessage": "Resource Endpoints"
+  },
+  "Temp.bbApis.Details.Endpoints.Endpoints.endpoints.header": {
+    "defaultMessage": "Resource endpoints can be used to overwrite API endpoint of resources through Operation Level Mediation Policies"
+  },
+  "Temp.operationComponents.EditParameter.close": {
+    "defaultMessage": "Close"
+  },
+  "Temp.operationComponents.EditParameter.data.type": {
+    "defaultMessage": "Fragment"
+  },
+  "Temp.operationComponents.EditParameter.done": {
+    "defaultMessage": "Add"
+  },
+  "Temp.operationComponents.EditParameter.select.schema.data.type": {
+    "defaultMessage": "Select the Fragment of the Mediation Policy"
+  },
+  "Temp.operationComponents.ListParameter.actions": {
+    "defaultMessage": "Actions"
+  },
+  "Temp.operationComponents.ListParameter.delete": {
+    "defaultMessage": "Delete"
+  },
+  "Temp.operationComponents.ListParameter.edit": {
+    "defaultMessage": "Edit"
+  },
+  "Temp.operationComponents.ListParameter.parameter.name": {
+    "defaultMessage": "Parameters"
+  },
+  "Temp.operationComponents.ListParameter.parameter.type": {
+    "defaultMessage": "Policy Type"
   },
   "UnexpectedError.logout": {
     "defaultMessage": "Logout"

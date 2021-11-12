@@ -41,6 +41,7 @@ import LockOpenIcon from '@material-ui/icons/LockOpen';
 import { FormattedMessage } from 'react-intl';
 import DescriptionAndSummary from './operationComponents/DescriptionAndSummary';
 import OperationGovernance from './operationComponents/OperationGovernance';
+import OperationMediation from './operationComponents/MediationPolicies/OperationMediation';
 import AWSLambdaSettings from './operationComponents/AWSLambdaSettings';
 import Parameters from './operationComponents/Parameters';
 import SOAPToRESTListing from './operationComponents/SOAPToREST/SOAPToRESTListing';
@@ -332,6 +333,10 @@ function Operation(props) {
                             verb={verb}
                             sharedScopes={sharedScopes}
                             setFocusOperationLevel={setFocusOperationLevel}
+                        />
+                        <OperationMediation
+                            // operation={operation}
+                            disableUpdate={disableUpdate}
                         />
                         {!hideParameters && (
                             <Parameters

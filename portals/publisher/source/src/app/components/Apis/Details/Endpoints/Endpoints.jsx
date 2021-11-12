@@ -18,6 +18,9 @@ import React, {
     useContext, useEffect, useState, useReducer,
 } from 'react';
 import { Grid } from '@material-ui/core';
+import Box from '@material-ui/core/Box';
+import Tabs from '@material-ui/core/Tabs';
+import Tab from '@material-ui/core/Tab';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import { FormattedMessage, injectIntl } from 'react-intl';
@@ -31,6 +34,7 @@ import cloneDeep from 'lodash.clonedeep';
 import { isRestricted } from 'AppData/AuthManager';
 import EndpointOverview from './EndpointOverview';
 import { createEndpointConfig, getEndpointTemplateByType } from './endpointUtils';
+import ResourceEndpointsOverview from './ResourceEndpointsOverview';
 
 const styles = (theme) => ({
     endpointTypesWrapper: {
@@ -60,6 +64,19 @@ const styles = (theme) => ({
     implSelectRadio: {
         padding: theme.spacing(1) / 2,
     },
+    // endpointsPaper: {
+    //     marginTop: theme.spacing(5),
+    // },
+    endpointsTab: {
+        fontSize: 'larger',
+        // fontWeight: 'bolder',
+    },
+    endpointsContainer: {
+        paddingTop: theme.spacing(3),
+        // flexDirection: 'column',
+        // paddingBottom: theme.spacing(6),
+        // paddingTop: theme.spacing(2),
+    },
 });
 
 const defaultSwagger = { paths: {} };
@@ -75,6 +92,7 @@ function Endpoints(props) {
     const [swagger, setSwagger] = useState(defaultSwagger);
     const [endpointValidity, setAPIEndpointsValid] = useState({ isValid: true, message: '' });
     const [isUpdating, setUpdating] = useState(false);
+    const [selectedTab, setSelectedTab] = useState(0);
 
     const apiReducer = (initState, configAction) => {
         const tmpEndpointConfig = cloneDeep(initState.endpointConfig);
@@ -469,82 +487,150 @@ function Endpoints(props) {
                             />
                         </Typography>
                         <div>
-                            <Grid container>
-                                <Grid item xs={12} className={classes.endpointsContainer}>
-                                    <EndpointOverview
-                                        swaggerDef={swagger}
-                                        updateSwagger={changeSwagger}
-                                        api={apiObject}
-                                        onChangeAPI={apiDispatcher}
-                                        endpointsDispatcher={apiDispatcher}
-                                        saveAndRedirect={saveAndRedirect}
-                                    />
-                                </Grid>
-                            </Grid>
-                            {
-                                endpointValidity.isValid
-                                    ? <div />
-                                    : (
-                                        <Grid item className={classes.errorMessageContainer}>
-                                            <Typography className={classes.endpointValidityMessage}>
-                                                {endpointValidity.message}
-                                            </Typography>
-                                        </Grid>
-                                    )
-                            }
-                            <Grid
-                                container
-                                direction='row'
-                                alignItems='flex-start'
-                                spacing={1}
-                                className={classes.buttonSection}
-                            >
-                                <Grid item>
-                                    {api.isRevision || !endpointValidity.isValid
-                                        || isRestricted(['apim:api_create'], api) ? (
-                                            <Button
-                                                disabled
-                                                type='submit'
-                                                variant='contained'
-                                                color='primary'
-                                            >
-                                                <FormattedMessage
-                                                    id='Apis.Details.Configuration.Configuration.save'
-                                                    defaultMessage='Save'
+                            <Box>
+                                <Tabs
+                                    value={selectedTab}
+                                    onChange={(event, tab) => setSelectedTab(tab)}
+                                    indicatorColor='primary'
+                                    textColor='primary'
+                                    variant='standard'
+                                    aria-label='API level or resource level endpoints'
+                                >
+                                    <Tab label={<span className={classes.endpointsTab}>API Endpoint</span>} />
+                                    <Tab label={<span className={classes.endpointsTab}>Resource Endpoints</span>} />
+                                </Tabs>
+                            </Box>
+                            <div role='tabpanel' hidden={selectedTab !== 0} id={`simple-tabpanel-${0}`}>
+                                {selectedTab === 0 && (
+                                    <div>
+                                        <Grid container direction='column' className={classes.endpointsContainer}>
+                                            <Grid item container direction='column' xs={12}>
+                                                <Typography
+                                                    id='api-endpoints-head'
+                                                    variant='h5'
+                                                    component='h3'
+                                                    align='left'
+                                                    gutterBottom
+                                                >
+                                                    <FormattedMessage
+                                                        id='Temp.Apis.Details.Endpoints.Endpoints.endpoints.header'
+                                                        defaultMessage='API Endpoint'
+                                                    />
+                                                </Typography>
+                                                <Typography variant='caption' component='div' gutterBottom>
+                                                    <FormattedMessage
+                                                        id='Temp.aApis.Details.Endpoints.Endpoints.endpoints.header'
+                                                        defaultMessage='Primary endpoint of the API'
+                                                    />
+                                                </Typography>
+                                                <EndpointOverview
+                                                    swaggerDef={swagger}
+                                                    updateSwagger={changeSwagger}
+                                                    api={apiObject}
+                                                    onChangeAPI={apiDispatcher}
+                                                    endpointsDispatcher={apiDispatcher}
+                                                    saveAndRedirect={saveAndRedirect}
                                                 />
-                                            </Button>
-                                        ) : (
-                                            <CustomSplitButton
-                                                handleSave={handleSave}
-                                                handleSaveAndDeploy={handleSaveAndDeploy}
-                                                isUpdating={isUpdating}
-                                            />
-                                        )}
-                                </Grid>
-                                <Grid item>
-                                    <Button
-                                        component={Link}
-                                        to={'/apis/' + api.id + '/overview'}
-                                    >
-                                        <FormattedMessage
-                                            id='Apis.Details.Endpoints.Endpoints.cancel'
-                                            defaultMessage='Cancel'
-                                        />
-                                    </Button>
-                                </Grid>
-                                {isRestricted(['apim:api_create'], api)
-                                && (
-                                    <Grid item>
-                                        <Typography variant='body2' color='primary'>
-                                            <FormattedMessage
-                                                id='Apis.Details.Endpoints.Endpoints.update.not.allowed'
-                                                defaultMessage={'*You are not authorized to update endpoints of'
-                                                + ' the API due to insufficient permissions'}
-                                            />
-                                        </Typography>
-                                    </Grid>
+                                            </Grid>
+                                        </Grid>
+                                        {
+                                            endpointValidity.isValid
+                                                ? <div />
+                                                : (
+                                                    <Grid item className={classes.errorMessageContainer}>
+                                                        <Typography className={classes.endpointValidityMessage}>
+                                                            {endpointValidity.message}
+                                                        </Typography>
+                                                    </Grid>
+                                                )
+                                        }
+                                        <Grid
+                                            container
+                                            direction='row'
+                                            alignItems='flex-start'
+                                            spacing={1}
+                                            className={classes.buttonSection}
+                                        >
+                                            <Grid item>
+                                                {api.isRevision || !endpointValidity.isValid
+                                                    || isRestricted(['apim:api_create'], api) ? (
+                                                        <Button
+                                                            disabled
+                                                            type='submit'
+                                                            variant='contained'
+                                                            color='primary'
+                                                        >
+                                                            <FormattedMessage
+                                                                id='Apis.Details.Configuration.Configuration.save'
+                                                                defaultMessage='Save'
+                                                            />
+                                                        </Button>
+                                                    ) : (
+                                                        <CustomSplitButton
+                                                            handleSave={handleSave}
+                                                            handleSaveAndDeploy={handleSaveAndDeploy}
+                                                            isUpdating={isUpdating}
+                                                        />
+                                                    )}
+                                            </Grid>
+                                            <Grid item>
+                                                <Button
+                                                    component={Link}
+                                                    to={'/apis/' + api.id + '/overview'}
+                                                >
+                                                    <FormattedMessage
+                                                        id='Apis.Details.Endpoints.Endpoints.cancel'
+                                                        defaultMessage='Cancel'
+                                                    />
+                                                </Button>
+                                            </Grid>
+                                            {isRestricted(['apim:api_create'], api)
+                                            && (
+                                                <Grid item>
+                                                    <Typography variant='body2' color='primary'>
+                                                        <FormattedMessage
+                                                            id='Apis.Details.Endpoints.Endpoints.update.not.allowed'
+                                                            defaultMessage={'*You are not authorized to update'
+                                                            + ' endpoints of the API due to insufficient permissions'}
+                                                        />
+                                                    </Typography>
+                                                </Grid>
+                                            )}
+                                        </Grid>
+                                    </div>
                                 )}
-                            </Grid>
+                            </div>
+                            <div role='tabpanel' hidden={selectedTab !== 1} id={`simple-tabpanel-${1}`}>
+                                {selectedTab === 1 && (
+                                    <div>
+                                        <Grid container direction='column' className={classes.endpointsContainer}>
+                                            <Grid item container direction='column' xs={12}>
+                                                <Typography
+                                                    id='api-endpoints-head'
+                                                    variant='h5'
+                                                    component='h3'
+                                                    align='left'
+                                                    gutterBottom
+                                                >
+                                                    <FormattedMessage
+                                                        id='Temp.bApis.Details.Endpoints.Endpoints.endpoints.header'
+                                                        defaultMessage='Resource Endpoints'
+                                                    />
+                                                </Typography>
+                                                <Typography variant='caption' component='div' gutterBottom>
+                                                    <FormattedMessage
+                                                        id='Temp.bbApis.Details.Endpoints.Endpoints.endpoints.header'
+                                                        defaultMessage={`Resource endpoints can be used to overwrite 
+                                                        API endpoint of resources through Operation Level
+                                                         Mediation Policies`}
+                                                    />
+                                                </Typography>
+                                                <ResourceEndpointsOverview />
+                                            </Grid>
+                                        </Grid>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
