@@ -2943,6 +2943,26 @@ class API extends Resource {
         });
         return promise_updated;
     }
+
+    // /**
+    //  * Retrieve policy definition schema
+    //  */
+    // policyDefinitionSchemaGet() {
+
+    //     // return this.client.then((client) => {
+    //     //     return client.apis['Policy Definition Schema'].exportTenantConfigSchema();
+    //     // });
+    // }
+
+    // /**
+    //  * Retrieve policy definition
+    //  */
+    // policyDefinitionGet() {
+
+    //     // return this.client.then((client) => {
+    //     //     return client.apis['Tenant Config'].exportTenantConfig();
+    //     // });
+    // }
 }
 
 
