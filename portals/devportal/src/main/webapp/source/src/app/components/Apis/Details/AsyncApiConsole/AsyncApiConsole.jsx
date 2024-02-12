@@ -225,9 +225,6 @@ export default function AsyncApiConsole() {
 
     return (
         <>
-            <Typography variant='h4' className={classes.titleSub}>
-                <FormattedMessage id='Apis.Details.AsyncApiConsole.AsyncApiConsole.title' defaultMessage='Try Out' />
-            </Typography>
             <Paper className={classes.paper}>
                 <Grid container className={classes.grid}>
                     {!user && (!api.advertiseInfo || !api.advertiseInfo.advertised) && (

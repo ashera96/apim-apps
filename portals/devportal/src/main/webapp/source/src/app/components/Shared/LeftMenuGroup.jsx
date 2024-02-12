@@ -1,8 +1,7 @@
-/* eslint-disable react/prop-types */
 /*
- * Copyright (c) 2017, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.org) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -53,16 +52,6 @@ const styles = (theme) => ({
     leftLInkText_IconLeft: {
         paddingLeft: 10,
     },
-    LeftMenu: {
-        backgroundColor: theme.custom.leftMenu.background,
-        width: theme.custom.leftMenu.width,
-        textAlign: 'center',
-        fontFamily: theme.typography.fontFamily,
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        top: 0,
-    },
     leftLInk: {
         paddingTop: theme.spacing(0.6),
         paddingBottom: theme.spacing(0.6),
@@ -95,32 +84,27 @@ const styles = (theme) => ({
     leftLInkText_NoTextWhenSmall: {
         [theme.breakpoints.down('sm')]: {
             display: 'none !important',
-        }
-    },
-    submenu: {
-        paddingLeft: 12,
-        [theme.breakpoints.down('sm')]: {
-            paddingLeft: 0,
-            color: theme.palette.grey[500],
-        }
+        },
     },
 });
+
 /**
  * Renders the left menu section.
  * @param {JSON} props props passed from parent
  * @returns {JSX} Leftmenu element.
  */
-function LeftMenuItem(props) {
+function LeftMenuItemGroup(props) {
     const [selected, setSelected] = useState(false);
 
     const {
-        classes, theme, Icon, to, history, text, route, submenu, open, id,
+        classes, theme, Icon, to, history, text, route, submenu, open, id, iconText,
     } = props;
     const routeToCheck = route || text;
     const { leftMenu } = theme.custom;
     const strokeColor = theme.palette.getContrastText(leftMenu.background);
     const { iconSize } = leftMenu;
-    const ditectCurrentMenu = (location = null) => {
+    const ditectCurrentMenu = (locationParam = null) => {
+        let location = locationParam;
         if (!location) {
             location = window.location;
         }
@@ -133,9 +117,8 @@ function LeftMenuItem(props) {
         } else {
             setSelected(false);
         }
-
-
     };
+
     useEffect(() => {
         ditectCurrentMenu();
     }, []);
@@ -149,15 +132,13 @@ function LeftMenuItem(props) {
         activeBackground = leftMenu.leftMenuActiveSubmenu;
     }
     return (
-        <BootstrapTooltip title={props.text} placement='right'>
+        <BootstrapTooltip title={text} placement='right'>
             <div>
                 <Link
                     className={classNames(
                         classes.leftLInk,
                         {
                             [classes.leftLink_IconLeft]: leftMenu === 'icon left',
-                            [classes.submenu]: submenu,
-                            'selected': selected,
                         },
                         'leftLInk',
                     )}
@@ -186,10 +167,10 @@ function LeftMenuItem(props) {
                         ) : (
                             // We can also add custom icons
                             <CustomIcon
-                                strokeColor={submenu ? '#cccccc' : strokeColor}
-                                width={submenu ? iconSize - 10 : iconSize}
-                                height={submenu ? iconSize - 10 : iconSize}
-                                icon={props.iconText}
+                                strokeColor={strokeColor}
+                                width={iconSize}
+                                height={iconSize}
+                                icon={iconText}
                                 aria-label={text + ' icon'}
                                 className={classNames(
                                     classes.leftLInk,
@@ -213,7 +194,7 @@ function LeftMenuItem(props) {
                                 'leftLInkText',
                             )}
                         >
-                            {props.text}
+                            {text}
                         </Typography>
                     )}
                     {!open && (
@@ -227,19 +208,18 @@ function LeftMenuItem(props) {
                             )}
                         />
                     )}
-
                 </Link>
             </div>
         </BootstrapTooltip>
     );
 }
-LeftMenuItem.defaultProps = {
+LeftMenuItemGroup.defaultProps = {
     route: null,
     iconText: null,
     Icon: null,
-    submenu: false,
+    // submenu: false,
 };
-LeftMenuItem.propTypes = {
+LeftMenuItemGroup.propTypes = {
     classes: PropTypes.shape({}).isRequired,
     theme: PropTypes.shape({}).isRequired,
     Icon: PropTypes.element,
@@ -253,7 +233,7 @@ LeftMenuItem.propTypes = {
     history: PropTypes.shape({
         location: PropTypes.shape({}).isRequired,
     }).isRequired,
-    submenu: PropTypes.bool,
+    // submenu: PropTypes.bool,
     id: PropTypes.string.isRequired,
 };
-export default withRouter(withStyles(styles, { withTheme: true })(LeftMenuItem));
+export default withRouter(withStyles(styles, { withTheme: true })(LeftMenuItemGroup));
