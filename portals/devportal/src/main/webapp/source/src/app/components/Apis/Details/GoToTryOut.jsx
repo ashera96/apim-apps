@@ -206,7 +206,7 @@ export default function GoToTryOut() {
         if (isAsyncAPI) {
             history.push('/apis/' + api.id + '/definition');
         } else {
-            history.push('/apis/' + api.id + '/test');
+            history.push('/apis/' + api.id + '/api-console');
         }
     };
 
