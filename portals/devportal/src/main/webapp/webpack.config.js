@@ -68,7 +68,7 @@ module.exports = function (env, argv) {
                 AppComponents: path.resolve(__dirname, 'source/src/app/components/'),
                 AppTests: path.resolve(__dirname, 'source/Tests/'),
             },
-            extensions: ['.mjs', '.js', '.jsx'],
+            extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx'],
         },
         node: { fs: 'empty' },
         devServer: {
@@ -114,6 +114,17 @@ module.exports = function (env, argv) {
                         },
                         {
                             loader: path.resolve('loader.js'),
+                        },
+                    ],
+                },
+                {
+                    test: /\.tsx?$/,
+                    use: [
+                        {
+                            loader: 'ts-loader',
+                            options: {
+                                onlyCompileBundledFiles: true,
+                            },
                         },
                     ],
                 },
