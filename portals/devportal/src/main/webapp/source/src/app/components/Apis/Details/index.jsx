@@ -36,6 +36,12 @@ import classNames from 'classnames';
 import { Helmet } from 'react-helmet';
 import { app } from 'Settings';
 import CONSTANTS from 'AppData/Constants';
+import Accordion from '@material-ui/core/Accordion';
+import AccordionSummary from '@material-ui/core/AccordionSummary';
+import AccordionDetails from '@material-ui/core/AccordionDetails';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import QuestionAnswerIcon from '@material-ui/icons/QuestionAnswer';
+import LeftMenuGroup from 'AppComponents/Shared/LeftMenuGroup';
 import CustomIcon from '../../Shared/CustomIcon';
 import LeftMenuItem from '../../Shared/LeftMenuItem';
 import { ResourceNotFound } from '../../Base/Errors/index';
@@ -54,6 +60,7 @@ const Credentials = lazy(() => import('./Credentials/Credentials' /* webpackChun
 const Comments = lazy(() => import('./Comments/Comments' /* webpackChunkName: "APIComments" */));
 const Sdk = lazy(() => import('./Sdk' /* webpackChunkName: "APISdk" */));
 const AsyncApiDefinition = lazy(() => import('./Definitions/AsyncApi/AsyncApiDefinitionUI'));
+const ApiChat = lazy(() => import('./ApiChat/ApiChat' /* webpackChunkName: "ApiChat" */));
 
 const LoadableSwitch = withRouter((props) => {
     const { match, api, setbreadcrumbDocument } = props;
@@ -62,13 +69,13 @@ const LoadableSwitch = withRouter((props) => {
     const redirectURL = path + apiUuid + '/overview';
 
     let tryoutRoute;
-    if (api.type === 'GRAPHQL') {
-        tryoutRoute = <Route path='/apis/:apiUuid/test' component={GraphQLConsole} />;
+    if (api.type === CONSTANTS.API_TYPES.GRAPHQL) {
+        tryoutRoute = <Route path='/apis/:apiUuid/api-console' component={GraphQLConsole} />;
     } else if (api.type === CONSTANTS.API_TYPES.WS || api.type === CONSTANTS.API_TYPES.WEBSUB
         || api.type === CONSTANTS.API_TYPES.SSE || api.type === CONSTANTS.API_TYPES.ASYNC) {
-        tryoutRoute = <Route path='/apis/:apiUuid/test' component={AsyncApiConsole} />;
+        tryoutRoute = <Route path='/apis/:apiUuid/api-console' component={AsyncApiConsole} />;
     } else {
-        tryoutRoute = <Route path='/apis/:apiUuid/test' component={ApiConsole} />;
+        tryoutRoute = <Route path='/apis/:apiUuid/api-console' component={ApiConsole} />;
     }
 
     return (
@@ -86,6 +93,7 @@ const LoadableSwitch = withRouter((props) => {
                 <Route path='/apis/:apiUuid/comments' component={Comments} />
                 <Route path='/apis/:apiUuid/credentials' component={Credentials} />
                 {tryoutRoute}
+                <Route path='/apis/:apiUuid/api-chat' component={ApiChat} />
                 <Route path='/apis/:apiUuid/sdk' component={Sdk} />
                 <Route component={ResourceNotFound} />
             </Switch>
@@ -203,6 +211,15 @@ const styles = (theme) => {
         },
         contentLoaderRightMenu: {
             paddingRight: theme.custom.leftMenu.width,
+        },
+        expandIconColor: {
+            color: '#ffffff',
+        },
+        leftMenuText: {
+            color: '#ffffff',
+        },
+        iconContainer: {
+            marginRight: theme.spacing(1),
         },
     };
 };
@@ -322,6 +339,7 @@ class Details extends React.Component {
             item: 1,
             xo: null,
             breadcrumbDocument: '',
+            tryOutExpanded: true,
         };
         this.setDetailsAPI = this.setDetailsAPI.bind(this);
         this.api_uuid = this.props.match.params.apiUuid;
@@ -413,7 +431,7 @@ class Details extends React.Component {
         } = this.props;
         const user = AuthManager.getUser();
         const {
-            api, notFound, open, breadcrumbDocument,
+            api, notFound, open, breadcrumbDocument, tryOutExpanded,
         } = this.state;
         const {
             custom: {
@@ -506,20 +524,68 @@ class Details extends React.Component {
                         )}
                         {showTryout && (api.gatewayVendor === 'wso2'
                         || (api.type === 'APIPRODUCT' && !api.gatewayVendor)) && (
-                            <LeftMenuItem
-                                text={(
-                                    <FormattedMessage
-                                        id='Apis.Details.index.try.out'
-                                        defaultMessage='Try out'
-                                    />
-                                )}
-                                route='test'
-                                iconText='test'
-                                to={pathPrefix + 'test'}
-                                open={open}
-                                id='left-menu-test'
-                            />
-
+                            <>
+                                <Accordion
+                                    id='left-menu-try-out'
+                                    expanded={tryOutExpanded}
+                                    elevation={0}
+                                    style={{ backgroundColor: 'transparent', margin: 0 }}
+                                    onChange={(_event, expanded) => this.setState({ tryOutExpanded: expanded })}
+                                >
+                                    <AccordionSummary
+                                        expandIcon={<ExpandMoreIcon className={classes.expandIconColor} />}
+                                        style={{ padding: '0 12px 0 5px', maxHeight: 43, minHeight: 43 }}
+                                    >
+                                        <LeftMenuGroup
+                                            text={(
+                                                <FormattedMessage
+                                                    id='Apis.Details.index.try.out.'
+                                                    defaultMessage='Try Out'
+                                                />
+                                            )}
+                                            iconText='test'
+                                            open={open}
+                                            id='left-menu-try-out'
+                                        />
+                                    </AccordionSummary>
+                                    <AccordionDetails
+                                        style={{ paddingTop: 0, paddingBottom: 0, margin: 0 }}
+                                    >
+                                        <div>
+                                            <LeftMenuGroup
+                                                text={(
+                                                    <FormattedMessage
+                                                        id='Apis.Details.index.try.out.api.console'
+                                                        defaultMessage='API Console'
+                                                    />
+                                                )}
+                                                route='api-console'
+                                                iconText='api-console'
+                                                to={pathPrefix + 'api-console'}
+                                                open={open}
+                                                // submenu
+                                                id='left-menu-test'
+                                            />
+                                            {api.type !== CONSTANTS.API_TYPES.GRAPHQL && !isAsyncApi && (
+                                                <LeftMenuGroup
+                                                    text={(
+                                                        <FormattedMessage
+                                                            id='Apis.Details.index.try.out.api.chat'
+                                                            defaultMessage='API Chat'
+                                                        />
+                                                    )}
+                                                    route='api-chat'
+                                                    Icon={<QuestionAnswerIcon style={{ fontSize: 'large', padding: 8 }} />}
+                                                    to={pathPrefix + 'api-chat'}
+                                                    open={open}
+                                                    // submenu
+                                                    id='left-menu-api-chat'
+                                                />
+                                            )}
+                                        </div>
+                                    </AccordionDetails>
+                                </Accordion>
+                            </>
                         )}
                         {(showSolaceTopics && api.gatewayVendor === 'solace') && (
                             <LeftMenuItem
