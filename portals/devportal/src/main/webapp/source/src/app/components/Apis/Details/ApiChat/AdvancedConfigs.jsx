@@ -1,7 +1,7 @@
 /*
- * Copyright (c) 2019, WSO2 Inc. (http://www.wso2.org) All Rights Reserved.
+ * Copyright (c) 2024, WSO2 LLC. (http://www.wso2.org) All Rights Reserved.
  *
- * WSO2 Inc. licenses this file to you under the Apache License,
+ * WSO2 LLC. licenses this file to you under the Apache License,
  * Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License.
  * You may obtain a copy of the License at
@@ -18,29 +18,23 @@
 
 import React from 'react';
 import { FormattedMessage } from 'react-intl';
-import Grid from '@mui/material/Grid';
-import Typography from '@mui/material/Typography';
+import Grid from '@material-ui/core/Grid';
+import Typography from '@material-ui/core/Typography';
 import PropTypes from 'prop-types';
-import withStyles from '@mui/styles/withStyles';
-import Icon from '@mui/material/Icon';
+import { withStyles } from '@material-ui/core/styles';
+import Icon from '@material-ui/core/Icon';
 import AuthManager from 'AppData/AuthManager';
-import Paper from '@mui/material/Paper';
-import Button from '@mui/material/Button';
-import postmanIcon from '@iconify/icons-simple-icons/postman';
+import Paper from '@material-ui/core/Paper';
+import Button from '@material-ui/core/Button';
 import { Icon as Icons } from '@iconify/react';
-import fileDownload from 'js-file-download';
-import openapiToPostman from 'openapi-to-postmanv2';
-import swaggerToPostman from 'swagger2-postman2-converter';
-import FileCopyIcon from '@mui/icons-material/FileCopy';
-import Tooltip from '@mui/material/Tooltip';
-import CloudDownloadRounded from '@mui/icons-material/CloudDownloadRounded';
+import Tooltip from '@material-ui/core/Tooltip';
+import CloudDownloadRounded from '@material-ui/icons/CloudDownloadRounded';
 import queryString from 'query-string';
 import Settings from 'Settings';
 import Utils from 'AppData/Utils';
 import { ApiContext } from '../ApiContext';
 import Progress from '../../../Shared/Progress';
 import Api from '../../../../data/api';
-import SwaggerUI from './SwaggerUI';
 import TryOutController from '../../../Shared/ApiTryOut/TryOutController';
 import Application from '../../../../data/Application';
 
@@ -74,9 +68,6 @@ const styles = (theme) => ({
         paddingTop: theme.spacing(2),
         paddingBottom: theme.spacing(2),
         color: theme.palette.getContrastText(theme.palette.background.default),
-    },
-    swaggerUIPaper: {
-        backgroundColor: theme.custom.apiDetailPages.swaggerUIBackground,
     },
 });
 
@@ -358,32 +349,6 @@ class ApiConsole extends React.Component {
     }
 
     /**
-     * Converting an OpenAPI file to a postman collection
-     * @memberof ApiConsole
-   */
-    convertToPostman(fr) {
-        openapiToPostman.convert({ type: 'string', data: fr },
-            {}, (err, conversionResult) => {
-                if (!conversionResult.result) {
-                    const collection = swaggerToPostman.convert(fr);
-                    if (!collection) {
-                        console.log('Could not convert');
-                    } else {
-                        fileDownload(
-                            JSON.stringify(collection),
-                            'postman collection',
-                        );
-                    }
-                } else {
-                    fileDownload(
-                        JSON.stringify(conversionResult.output[0].data),
-                        'postman collection',
-                    );
-                }
-            });
-    }
-
-    /**
      * Load the access token for given key type
      * @memberof TryOutController
      */
@@ -561,107 +526,41 @@ class ApiConsole extends React.Component {
                             </Grid>
                         )}
                     </Grid>
-                    <Grid container className={classes.grid}>
-                        <TryOutController
-                            setSecurityScheme={this.setSecurityScheme}
-                            securitySchemeType={securitySchemeType}
-                            setSelectedEnvironment={this.setSelectedEnvironment}
-                            selectedEnvironment={selectedEnvironment}
-                            productionAccessToken={productionAccessToken}
-                            setProductionAccessToken={this.setProductionAccessToken}
-                            sandboxAccessToken={sandboxAccessToken}
-                            setSandboxAccessToken={this.setSandboxAccessToken}
-                            swagger={swaggerSpec}
-                            environments={environments}
-                            scopes={scopes}
-                            setUsername={this.setUsername}
-                            setPassword={this.setPassword}
-                            username={username}
-                            password={password}
-                            setSelectedKeyType={this.setSelectedKeyType}
-                            selectedKeyType={selectedKeyType}
-                            setSelectedKeyManager={this.setSelectedKeyManager}
-                            selectedKeyManager={selectedKeyManager}
-                            updateSwagger={this.updateSwagger}
-                            setKeys={this.setKeys}
-                            setProductionApiKey={this.setProductionApiKey}
-                            setSandboxApiKey={this.setSandboxApiKey}
-                            productionApiKey={productionApiKey}
-                            sandboxApiKey={sandboxApiKey}
-                            setAdvAuthHeader={this.setAdvAuthHeader}
-                            setAdvAuthHeaderValue={this.setAdvAuthHeaderValue}
-                            advAuthHeader={advAuthHeader}
-                            advAuthHeaderValue={advAuthHeaderValue}
-                            setSelectedEndpoint={this.setSelectedEndpoint}
-                            selectedEndpoint={selectedEndpoint}
-                            api={this.state.api}
-                            URLs={null}
-                        />
-                    </Grid>
 
-                    {api.type !== 'SOAP' && (
-                        <Grid container>
-                            <Grid xs={7} item />
-                            <Grid xs={2} item>
-                                <Button size='small' color='grey' onClick={() => this.convertToPostman(downloadSwagger)}>
-                                    <Icons icon={postmanIcon} width={30} height={30} className={classes.buttonIcon} />
-                                    <FormattedMessage
-                                        id='Apis.Details.APIConsole.APIConsole.download.postman'
-                                        defaultMessage='Postman collection'
-                                    />
-                                </Button>
-                            </Grid>
-                            <Grid xs={3} item>
-                                <a href={downloadLink} download={fileName}>
-                                    <Button size='small' color='grey'>
-                                        <CloudDownloadRounded className={classes.buttonIcon} />
-                                        <FormattedMessage
-                                            id='Apis.Details.APIConsole.APIConsole.download.swagger'
-                                            defaultMessage='Swagger ( /swagger.json )'
-                                        />
-                                    </Button>
-                                </a>
-                                <Tooltip
-                                    title={urlCopied
-                                        ? (
-                                            <FormattedMessage
-                                                id='Apis.Details.Swagger.URL.copied'
-                                                defaultMessage='Copied'
-                                            />
-                                        )
-                                        : (
-                                            <FormattedMessage
-                                                id='Apis.Details.Swagger.URL.copy.to.clipboard'
-                                                defaultMessage='Copy to clipboard'
-                                            />
-                                        )}
-                                    placement='top'
-                                >
-                                    <Button
-                                        aria-label='Copy to clipboard'
-                                        className={classes.button}
-                                        color='grey'
-                                        onClick={() => {
-                                            navigator.clipboard.writeText(location.origin
-                                                + '/api/am/devportal/v3/apis/' + api.id + '/swagger?accessToken='
-                                                + accessTokenPart + '&X-WSO2-Tenant-Q=' + tenant + '&'
-                                                + selectedAttribute + '=' + selectedEnvironment).then(this.onCopy());
-                                        }}
-                                    >
-                                        <FileCopyIcon className={classes.buttonIcon} />
-                                    </Button>
-                                </Tooltip>
-                            </Grid>
-                        </Grid>
-                    )}
-                </Paper>
-                <Paper className={classes.swaggerUIPaper}>
-                    <SwaggerUI
-                        api={this.state.api}
-                        accessTokenProvider={this.accessTokenProvider}
-                        spec={swaggerSpec}
-                        authorizationHeader={authorizationHeader}
+                    <TryOutController
+                        setSecurityScheme={this.setSecurityScheme}
                         securitySchemeType={securitySchemeType}
+                        setSelectedEnvironment={this.setSelectedEnvironment}
+                        selectedEnvironment={selectedEnvironment}
+                        productionAccessToken={productionAccessToken}
+                        setProductionAccessToken={this.setProductionAccessToken}
+                        sandboxAccessToken={sandboxAccessToken}
+                        setSandboxAccessToken={this.setSandboxAccessToken}
+                        swagger={swaggerSpec}
+                        environments={environments}
+                        scopes={scopes}
+                        setUsername={this.setUsername}
+                        setPassword={this.setPassword}
+                        username={username}
+                        password={password}
+                        setSelectedKeyType={this.setSelectedKeyType}
+                        selectedKeyType={selectedKeyType}
+                        setSelectedKeyManager={this.setSelectedKeyManager}
+                        selectedKeyManager={selectedKeyManager}
+                        updateSwagger={this.updateSwagger}
+                        setKeys={this.setKeys}
+                        setProductionApiKey={this.setProductionApiKey}
+                        setSandboxApiKey={this.setSandboxApiKey}
+                        productionApiKey={productionApiKey}
+                        sandboxApiKey={sandboxApiKey}
+                        setAdvAuthHeader={this.setAdvAuthHeader}
+                        setAdvAuthHeaderValue={this.setAdvAuthHeaderValue}
+                        advAuthHeader={advAuthHeader}
+                        advAuthHeaderValue={advAuthHeaderValue}
+                        setSelectedEndpoint={this.setSelectedEndpoint}
+                        selectedEndpoint={selectedEndpoint}
+                        api={this.state.api}
+                        URLs={null}
                     />
                 </Paper>
             </>
