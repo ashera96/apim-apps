@@ -42,10 +42,10 @@ import Visibility from '@material-ui/icons/Visibility';
 import VisibilityOff from '@material-ui/icons/VisibilityOff';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ExpandLessIcon from '@material-ui/icons/ExpandLess';
-import AdvertiseDetailsPanel from 'AppComponents/Apis/Details/ApiConsole/AdvertiseDetailsPanel';
-import Progress from '../../../Shared/Progress';
-import Api from '../../../../data/api';
-import Application from '../../../../data/Application';
+import AdvertiseDetailsPanel from 'AppComponents/Shared/ApiTryOut/AdvertiseDetailsPanel';
+import Progress from '../Progress';
+import Api from '../../../data/api';
+import Application from '../../../data/Application';
 import SelectAppPanel from './SelectAppPanel';
 
 /**
@@ -758,7 +758,7 @@ function TryOutController(props) {
                                                 <CircularProgress size={15} />
                                             )}
                                             <FormattedMessage
-                                                id='Apis.Details.ApiCOnsole.generate.test.key'
+                                                id='Apis.Details.ApiConsole.generate.test.key'
                                                 defaultMessage='GET TEST KEY '
                                             />
                                         </Button>
