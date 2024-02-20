@@ -68,7 +68,7 @@ module.exports = function (env, argv) {
                 AppComponents: path.resolve(__dirname, 'source/src/app/components/'),
                 AppTests: path.resolve(__dirname, 'source/Tests/'),
             },
-            extensions: ['.mjs', '.js', '.jsx', '.ts', '.tsx'],
+            extensions: ['.mjs', '.js', '.jsx'],
             fallback: {
                 "fs": false,
                 "tls": false,
@@ -126,17 +126,6 @@ module.exports = function (env, argv) {
                         },
                         {
                             loader: path.resolve('loader.js'),
-                        },
-                    ],
-                },
-                {
-                    test: /\.tsx?$/,
-                    use: [
-                        {
-                            loader: 'ts-loader',
-                            options: {
-                                onlyCompileBundledFiles: true,
-                            },
                         },
                     ],
                 },
