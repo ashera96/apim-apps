@@ -29,6 +29,7 @@ import GraphqlAPIMenu from 'AppComponents/Apis/Listing/Landing/Menus/GraphqlAPIM
 import StreamingAPIMenu from 'AppComponents/Apis/Listing/Landing/Menus/StreamingAPIMenu';
 import DesignAssistantMenu from './Menus/DesignAssistantMenu';
 import AIAPIMenu from './Menus/AIAPIMenu';
+import MCPServerMenu from './Menus/MCPServerMenu';
 
 const PREFIX = 'APILanding';
 
@@ -134,6 +135,7 @@ const APILanding = () => {
                                         <StreamingAPIMenu icon={streamingApiIcon} />
                                     }
                                     <AIAPIMenu icon={aiApiIcon} />
+                                    <MCPServerMenu icon={aiApiIcon} />
                                 </Grid>
                                 {settings.designAssistantEnabled && (
                                     <Divider 

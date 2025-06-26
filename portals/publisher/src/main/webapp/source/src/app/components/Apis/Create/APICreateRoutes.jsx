@@ -30,6 +30,7 @@ import ApiCreateWebSocket from './WebSocket/ApiCreateWebSocket';
 import APICreateStreamingAPI from './StreamingAPI/APICreateStreamingAPI';
 import APICreateAsyncAPI from './AsyncAPI/ApiCreateAsyncAPI';
 import ApiCreateAIAPI from './AIAPI/APICreateAIAPI';
+import MCPCreateOpenAPI from './MCP/MCPCreateOpenAPI';
 
 const PREFIX = 'APICreateRoutes';
 
@@ -131,6 +132,10 @@ function APICreateRoutes() {
                         .filter(t=>gatewayTypes.includes(t)).map(type => gatewayDetails[type]) })}
                 />
                 <Route path='/apis/create/ai-api' component={WithSomeValue(ApiCreateAIAPI,
+                    { multiGateway: apiTypes?.ai
+                        .filter(t=>gatewayTypes.includes(t)).map(type => gatewayDetails[type]) })}
+                />
+                <Route path='/apis/create/mcp-server' component={WithSomeValue(MCPCreateOpenAPI,
                     { multiGateway: apiTypes?.ai
                         .filter(t=>gatewayTypes.includes(t)).map(type => gatewayDetails[type]) })}
                 />
