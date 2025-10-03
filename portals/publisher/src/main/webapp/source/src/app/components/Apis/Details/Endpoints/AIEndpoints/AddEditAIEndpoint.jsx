@@ -336,11 +336,32 @@ const AddEditAIEndpoint = ({
                     setEndpointUrl(endpointConfig.sandbox_endpoints.url);
                 }
 
-                // Set API key value
+                // Set API key value and authorization header from endpoint configuration
                 const envType = isProd ? 'production' : 'sandbox';
                 const securityConfig = endpointConfig.endpoint_security?.[envType];
                 if (securityConfig?.apiKeyValue === '') {
                     setApiKeyValue('********');
+                }
+                // Set authorization header from endpoint configuration
+                if (securityConfig?.apiKeyIdentifier) {
+                    setApiKeyHeaderName(securityConfig.apiKeyIdentifier);
+                }
+                // Set endpoint configuration for editing mode
+                if (securityConfig?.type) {
+                    setEndpointConfiguration({
+                        authenticationConfiguration: {
+                            enabled: true,
+                            type: securityConfig.type,
+                            parameters: {
+                                headerEnabled: securityConfig.apiKeyIdentifierType === "HEADER",
+                                headerName: securityConfig.apiKeyIdentifierType === "HEADER" 
+                                    ? securityConfig.apiKeyIdentifier : null,
+                                queryParameterEnabled: securityConfig.apiKeyIdentifierType === "QUERY_PARAMETER",
+                                queryParameterName: securityConfig.apiKeyIdentifierType === "QUERY_PARAMETER" 
+                                    ? securityConfig.apiKeyIdentifier : null
+                            }
+                        }
+                    });
                 }
                 // Set AWS related values
                 if (securityConfig?.accessKey) {
@@ -366,11 +387,33 @@ const AddEditAIEndpoint = ({
                             setEndpointUrl(body.endpointConfig.sandbox_endpoints.url);
                         }
 
-                        // Set API key value
+                        // Set API key value and authorization header from endpoint configuration
                         const envType = body.deploymentStage === "PRODUCTION" ? 'production' : 'sandbox';
                         const securityConfig = body.endpointConfig.endpoint_security?.[envType];
                         if (securityConfig?.apiKeyValue === '') {
                             setApiKeyValue('********');
+                        }
+                        // Set authorization header from endpoint configuration
+                        if (securityConfig?.apiKeyIdentifier) {
+                            setApiKeyHeaderName(securityConfig.apiKeyIdentifier);
+                        }
+                        // Set endpoint configuration for editing mode
+                        if (securityConfig?.type) {
+                            setEndpointConfiguration({
+                                authenticationConfiguration: {
+                                    enabled: true,
+                                    type: securityConfig.type,
+                                    parameters: {
+                                        headerEnabled: securityConfig.apiKeyIdentifierType === "HEADER",
+                                        headerName: securityConfig.apiKeyIdentifierType === "HEADER" 
+                                            ? securityConfig.apiKeyIdentifier : null,
+                                        queryParameterEnabled:
+                                            securityConfig.apiKeyIdentifierType === "QUERY_PARAMETER",
+                                        queryParameterName: securityConfig.apiKeyIdentifierType === "QUERY_PARAMETER" 
+                                            ? securityConfig.apiKeyIdentifier : null
+                                    }
+                                }
+                            });
                         }
                         // Set AWS related values
                         if (securityConfig?.accessKey) {
@@ -408,6 +451,46 @@ const AddEditAIEndpoint = ({
             }
         });
     }, []);
+
+    // Set default provider and version on page load from subtypeConfiguration
+    useEffect(() => {
+        if (llmProviders && llmProviders.list && llmProviderName && subtypeConfig && !isEditing) {
+            // Find the provider that matches the AI API's vendor
+            const matchingProvider = llmProviders.list.find(
+                (provider) => provider.name === llmProviderName
+            );
+            if (matchingProvider && !selectedProvider) {
+                setSelectedProvider(matchingProvider.name);
+            }
+
+            // Find the specific model/version that matches the AI API's configuration
+            const matchingModel = llmProviders.list.find(
+                (model) => model.id === subtypeConfig.llmProviderId
+            );
+            if (matchingModel && !selectedModel) {
+                setSelectedModel(matchingModel);
+                // Also fetch the endpoint configuration to populate authorization header
+                API.getLLMProviderEndpointConfiguration(matchingModel.id)
+                    .then((response) => {
+                        if (response.body) {
+                            setEndpointConfiguration(response.body);
+                        }
+                    }).catch((error) => {
+                        if (error.response) {
+                            Alert.error(error.response.body.description);
+                        } else {
+                            Alert.error(intl.formatMessage({
+                                id: 'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI'
+                                + '.LLMProvider.Endpoint.Configuration.fetch.'
+                                + 'error',
+                                defaultMessage: 'Something went wrong while '
+                                + 'fetching LLM Provider Endpoint Config',
+                            }));
+                        }
+                    });
+            }
+        }
+    }, [llmProviders, llmProviderName, selectedProvider, selectedModel, subtypeConfig, isEditing]);
 
     const getUniqueProviders = () => {
         if (!llmProviders || !llmProviders.list) return [];
@@ -465,7 +548,12 @@ const AddEditAIEndpoint = ({
         }
 
         let updatedApiKeyValue = apiKeyValue;
-        if ((llmProviderName === 'MistralAI' || llmProviderName === 'OpenAI') &&
+        
+        // Add Bearer prefix if authorization header is "Authorization" (case-insensitive)
+        if (apiKeyHeaderName && apiKeyHeaderName.toLowerCase() === 'authorization' &&
+            apiKeyValue !== null && apiKeyValue !== '') {
+            updatedApiKeyValue = `Bearer ${updatedApiKeyValue}`;
+        } else if ((llmProviderName === 'MistralAI' || llmProviderName === 'OpenAI') &&
             apiKeyValue !== null && apiKeyValue !== '') {
             updatedApiKeyValue = `Bearer ${updatedApiKeyValue}`;
         }
@@ -476,11 +564,15 @@ const AddEditAIEndpoint = ({
         if (endpointConfiguration.authenticationConfiguration.enabled
             && endpointConfiguration.authenticationConfiguration.type === "apikey") {
             if (endpointConfiguration.authenticationConfiguration.parameters.headerEnabled) {
-                apiKeyIdentifier = endpointConfiguration.authenticationConfiguration.parameters.headerName;
+                // Use the current apiKeyHeaderName state value instead of the configuration value
+                apiKeyIdentifier = apiKeyHeaderName || 
+                    endpointConfiguration.authenticationConfiguration.parameters.headerName;
                 apiKeyIdentifierType = "HEADER";
             }
             if (endpointConfiguration.authenticationConfiguration.parameters.queryParameterEnabled) {
-                apiKeyIdentifier = endpointConfiguration.authenticationConfiguration.parameters.queryParameterName;
+                // Use the current apiKeyHeaderName state value instead of the configuration value
+                apiKeyIdentifier = apiKeyHeaderName || 
+                    endpointConfiguration.authenticationConfiguration.parameters.queryParameterName;
                 apiKeyIdentifierType = "QUERY_PARAMETER";
             }
         }
@@ -500,20 +592,42 @@ const AddEditAIEndpoint = ({
         }
     };
 
+    const handleApiKeyHeaderNameChange = (event) => {
+        const newHeaderName = event.target.value;
+        setApiKeyHeaderName(newHeaderName);
+        
+        // Update the endpoint security configuration with the new header name
+        if (endpointConfiguration.authenticationConfiguration.enabled
+            && endpointConfiguration.authenticationConfiguration.type === "apikey") {
+            const isProduction = state.deploymentStage === CONSTS.DEPLOYMENT_STAGE.production;
+            let apiKeyIdentifier;
+            let apiKeyIdentifierType;
+            
+            if (endpointConfiguration.authenticationConfiguration.parameters.headerEnabled) {
+                apiKeyIdentifier = newHeaderName;
+                apiKeyIdentifierType = "HEADER";
+            }
+            if (endpointConfiguration.authenticationConfiguration.parameters.queryParameterEnabled) {
+                apiKeyIdentifier = newHeaderName;
+                apiKeyIdentifierType = "QUERY_PARAMETER";
+            }
+            
+            // Only update if we have a valid identifier
+            if (apiKeyIdentifier) {
+                saveEndpointSecurityConfig({
+                    ...CONSTS.DEFAULT_ENDPOINT_SECURITY,
+                    type: endpointConfiguration.authenticationConfiguration.type,
+                    apiKeyIdentifier,
+                    apiKeyIdentifierType,
+                    apiKeyValue: apiKeyValue || '',
+                    enabled: true,
+                }, isProduction ? 'production' : 'sandbox');
+            }
+        }
+    };
+
     const url = getBasePath(apiObject.apiType) + apiObject.id + '/endpoints';
 
-    useEffect(() => {
-        if (apiObject.subtypeConfiguration?.subtype === 'AIAPI') {
-            API.getLLMProviderEndpointConfiguration(
-                JSON.parse(apiObject.subtypeConfiguration.configuration).llmProviderId)
-                .then((response) => {
-                    if (response.body) {
-                        const config = response.body;
-                        setEndpointConfiguration(config);
-                    }
-                });
-        }
-    }, []);
 
     useEffect(() => {
         try {
@@ -887,9 +1001,30 @@ const AddEditAIEndpoint = ({
                 : null,
     };
 
+    // Helper function to extract authorization header name from configuration
+    const getAuthorizationHeaderName = (config) => {
+        if (config?.authenticationConfiguration?.enabled && 
+            config?.authenticationConfiguration?.type === "apikey") {
+            if (config.authenticationConfiguration.parameters?.headerEnabled) {
+                return config.authenticationConfiguration.parameters.headerName;
+            }
+            if (config.authenticationConfiguration.parameters?.queryParameterEnabled) {
+                return config.authenticationConfiguration.parameters.queryParameterName;
+            }
+        }
+        return null;
+    };
+
     useEffect(() => {
-        setApiKeyHeaderName(apiKeyParamConfig.authHeader || apiKeyParamConfig.authQueryParam);
-    }, [apiKeyParamConfig]);
+        // Only set authorization header from endpoint configuration when NOT editing
+        // When editing, the authorization header should come from the endpoint's saved configuration
+        if (!isEditing) {
+            const headerName = getAuthorizationHeaderName(endpointConfiguration);
+            if (headerName) {
+                setApiKeyHeaderName(headerName);
+            }
+        }
+    }, [endpointConfiguration, isEditing]);
 
     const IS_APIKEY_AUTH_ENABLED = (config) =>
         config.authenticationConfiguration?.enabled === true &&
@@ -973,7 +1108,8 @@ const AddEditAIEndpoint = ({
 
                         {/* Main Form Grid */}
                         <Grid container spacing={2}>
-                            {llmProviders && (<Grid item xs={6}>
+                            {/* Provider and Version dropdowns - only show when not editing */}
+                            {!isEditing && llmProviders && (<Grid item xs={6}>
                                 <FormControl component='fieldset' fullWidth>
                                     <FormLabel component='legend' sx={{ width: '100%' }}>
                                         <Autocomplete
@@ -984,6 +1120,8 @@ const AddEditAIEndpoint = ({
                                             value={selectedProvider}
                                             onChange={(e, newValue) => {
                                                 setSelectedProvider(newValue);
+                                                // Reset selected model when provider changes
+                                                setSelectedModel(null);
                                             }}
                                             renderOption={(options, provider) => (
                                                 <li {...options}>
@@ -993,23 +1131,23 @@ const AddEditAIEndpoint = ({
                                             renderInput={(params) => (
                                                 <TextField {...params}
                                                     fullWidth
-                                                    // label={llmProviders.list.length !== 0 ? (
-                                                    //     <>
-                                                    //         <FormattedMessage
-                                                    //             id={'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI.'
-                                                    //             + 'AI.provider'}
-                                                    //             defaultMessage='AI Service Provider'
-                                                    //         />
-                                                    //         <sup className={classes.mandatoryStar}>*</sup>
-                                                    //     </>
-                                                    // ) : (
-                                                    //     <FormattedMessage
-                                                    //         id={'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI'
-                                                    //             +'.AI.provider.empty'}
-                                                    //         defaultMessage='No AI Service Provider defined.'
-                                                    //     />
-                                                    // )
-                                                    // }
+                                                    label={llmProviders.list.length !== 0 ? (
+                                                        <>
+                                                            <FormattedMessage
+                                                                id={'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI.'
+                                                                + 'AI.provider'}
+                                                                defaultMessage='AI Service Provider'
+                                                            />
+                                                            <sup className={classes.mandatoryStar}>*</sup>
+                                                        </>
+                                                    ) : (
+                                                        <FormattedMessage
+                                                            id={'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI'
+                                                                +'.AI.provider.empty'}
+                                                            defaultMessage='No AI Service Provider defined.'
+                                                        />
+                                                    )
+                                                    }
                                                     placeholder={intl.formatMessage({
                                                         id: 'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI'
                                                         + '.AI.provider.placeholder',
@@ -1024,7 +1162,7 @@ const AddEditAIEndpoint = ({
                                     </FormLabel>
                                 </FormControl>
                             </Grid>)}
-                            {llmProviders && (<Grid item xs={6}>
+                            {!isEditing && llmProviders && (<Grid item xs={6}>
                                 <FormControl component='fieldset' fullWidth>
                                     <FormLabel component='legend' sx={{ width: '100%' }}>
                                         <Autocomplete
@@ -1069,23 +1207,23 @@ const AddEditAIEndpoint = ({
                                             renderInput={(params) => (
                                                 <TextField {...params}
                                                     fullWidth
-                                                    // label={llmProviders.list.length !== 0 ? (
-                                                    //     <>
-                                                    //         <FormattedMessage
-                                                    //             id={'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI'
-                                                    //             + '.AI.model'}
-                                                    //             defaultMessage='API version'
-                                                    //         />
-                                                    //         <sup className={classes.mandatoryStar}>*</sup>
-                                                    //     </>
-                                                    // ) : (
-                                                    //     <FormattedMessage
-                                                    //         id={'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI'
-                                                    //             + '.AI.model.empty'}
-                                                    //         defaultMessage='No AI Service Provider selected.'
-                                                    //     />
-                                                    // )
-                                                    // }
+                                                    label={llmProviders.list.length !== 0 ? (
+                                                        <>
+                                                            <FormattedMessage
+                                                                id={'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI'
+                                                                + '.AI.model'}
+                                                                defaultMessage='API version'
+                                                            />
+                                                            <sup className={classes.mandatoryStar}>*</sup>
+                                                        </>
+                                                    ) : (
+                                                        <FormattedMessage
+                                                            id={'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI'
+                                                                + '.AI.model.empty'}
+                                                            defaultMessage='No AI Service Provider selected.'
+                                                        />
+                                                    )
+                                                    }
                                                     placeholder={intl.formatMessage({
                                                         id: 'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI'
                                                         + '.AI.model.placeholder',
@@ -1223,7 +1361,7 @@ const AddEditAIEndpoint = ({
                                             fullWidth
                                             id='api-key-id'
                                             value={apiKeyHeaderName}
-                                            onChange={(e) => setApiKeyHeaderName(e.target.value)}
+                                            onChange={handleApiKeyHeaderNameChange}
                                             placeholder={apiKeyParamConfig.authHeader ||
                                                 apiKeyParamConfig.authQueryParam}
                                             InputLabelProps={{
