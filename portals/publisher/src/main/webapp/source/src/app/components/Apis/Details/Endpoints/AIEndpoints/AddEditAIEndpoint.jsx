@@ -278,8 +278,39 @@ const AddEditAIEndpoint = ({
 
     const subtypeConfig = apiObject.subtypeConfiguration && JSON.parse(apiObject.subtypeConfiguration.configuration);
     const llmProviderName = subtypeConfig ? subtypeConfig.llmProviderName : null;
+    const llmProviderId = subtypeConfig ? subtypeConfig.llmProviderId : null;
 
     const [isEditing, setIsEditing] = useState(false);
+
+    // Get default header name from LLM provider config when creating new endpoint
+    useEffect(() => {
+        if (!isEditing && llmProviderId) {
+            API.getLLMProviderEndpointConfiguration(llmProviderId)
+                .then((response) => {
+                    if (response.body) {
+                        const config = response.body;
+                        if (config.authenticationConfiguration?.enabled &&
+                            config.authenticationConfiguration?.type === "apikey") {
+                            if (config.authenticationConfiguration.parameters?.headerEnabled) {
+                                setApiKeyHeaderName(config.authenticationConfiguration.parameters.headerName);
+                            } else if (config.authenticationConfiguration.parameters?.queryParameterEnabled) {
+                                setApiKeyHeaderName(config.authenticationConfiguration.parameters.queryParameterName);
+                            }
+                        }
+                    }
+                }).catch((error) => {
+                    if (error.response) {
+                        Alert.error(error.response.body.description);
+                    } else {
+                        Alert.error(intl.formatMessage({
+                            id: 'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI'
+                            + '.LLMProvider.Endpoint.Configuration.fetch.error',
+                            defaultMessage: 'Something went wrong while fetching LLM Provider Endpoint Config',
+                        }));
+                    }
+                });
+        }
+    }, [isEditing, llmProviderId]);
 
     const history = useHistory();
 
@@ -342,27 +373,40 @@ const AddEditAIEndpoint = ({
                 if (securityConfig?.apiKeyValue === '') {
                     setApiKeyValue('********');
                 }
-                // Set authorization header from endpoint configuration
-                if (securityConfig?.apiKeyIdentifier) {
-                    setApiKeyHeaderName(securityConfig.apiKeyIdentifier);
-                }
                 // Set endpoint configuration for editing mode
-                if (securityConfig?.type) {
-                    setEndpointConfiguration({
-                        authenticationConfiguration: {
-                            enabled: true,
-                            type: securityConfig.type,
-                            parameters: {
-                                headerEnabled: securityConfig.apiKeyIdentifierType === "HEADER",
-                                headerName: securityConfig.apiKeyIdentifierType === "HEADER" 
-                                    ? securityConfig.apiKeyIdentifier : null,
-                                queryParameterEnabled: securityConfig.apiKeyIdentifierType === "QUERY_PARAMETER",
-                                queryParameterName: securityConfig.apiKeyIdentifierType === "QUERY_PARAMETER" 
-                                    ? securityConfig.apiKeyIdentifier : null
-                            }
+                // For default endpoints, we always want to show the auth fields
+                const defaultConfig = {
+                    authenticationConfiguration: {
+                        enabled: true,
+                        type: securityConfig?.type || "apikey", // Default to apikey type for default endpoints
+                        parameters: {
+                            headerEnabled: securityConfig?.apiKeyIdentifierType === "HEADER" || true,
+                            headerName: securityConfig?.apiKeyIdentifier || apiKeyHeaderName || "",
+                            queryParameterEnabled: securityConfig?.apiKeyIdentifierType === "QUERY_PARAMETER" || false,
+                            queryParameterName: securityConfig?.apiKeyIdentifierType === "QUERY_PARAMETER" 
+                                ? securityConfig.apiKeyIdentifier : null
                         }
-                    });
-                }
+                    }
+                };
+
+                // Set authorization header from endpoint configuration
+                // For default endpoints, always set a header value
+                setApiKeyHeaderName(defaultConfig.authenticationConfiguration.parameters.headerName);
+
+                // Update endpoint configuration
+                setEndpointConfiguration({
+                    authenticationConfiguration: {
+                        enabled: true,
+                        type: securityConfig?.type || "apikey", // Default to apikey type for default endpoints
+                        parameters: {
+                            headerEnabled: securityConfig?.apiKeyIdentifierType === "HEADER" || true,
+                            headerName: securityConfig?.apiKeyIdentifier || apiKeyHeaderName || "x-api-key",
+                            queryParameterEnabled: securityConfig?.apiKeyIdentifierType === "QUERY_PARAMETER" || false,
+                            queryParameterName: securityConfig?.apiKeyIdentifierType === "QUERY_PARAMETER" 
+                                ? securityConfig.apiKeyIdentifier : null
+                        }
+                    }
+                });
                 // Set AWS related values
                 if (securityConfig?.accessKey) {
                     setAccessKey(securityConfig?.accessKey);
@@ -393,11 +437,27 @@ const AddEditAIEndpoint = ({
                         if (securityConfig?.apiKeyValue === '') {
                             setApiKeyValue('********');
                         }
-                        // Set authorization header from endpoint configuration
-                        if (securityConfig?.apiKeyIdentifier) {
-                            setApiKeyHeaderName(securityConfig.apiKeyIdentifier);
-                        }
                         // Set endpoint configuration for editing mode
+                        const customConfig = {
+                            authenticationConfiguration: {
+                                enabled: true,
+                                type: securityConfig?.type || "apikey",
+                                parameters: {
+                                    headerEnabled: securityConfig?.apiKeyIdentifierType === "HEADER" || true,
+                                    headerName: securityConfig?.apiKeyIdentifier || apiKeyHeaderName || "",
+                                    queryParameterEnabled:
+                                        securityConfig?.apiKeyIdentifierType === "QUERY_PARAMETER" || false,
+                                    queryParameterName: securityConfig?.apiKeyIdentifierType === "QUERY_PARAMETER" 
+                                        ? securityConfig.apiKeyIdentifier : null
+                                }
+                            }
+                        };
+
+                        // Set authorization header from endpoint configuration
+                        // For custom endpoints, use saved value or default
+                        setApiKeyHeaderName(customConfig.authenticationConfiguration.parameters.headerName);
+
+                        // Update endpoint configuration
                         if (securityConfig?.type) {
                             setEndpointConfiguration({
                                 authenticationConfiguration: {
@@ -549,11 +609,8 @@ const AddEditAIEndpoint = ({
 
         let updatedApiKeyValue = apiKeyValue;
         
-        // Add Bearer prefix if authorization header is "Authorization" (case-insensitive)
+        // Add Bearer prefix only if authorization header is "Authorization" (case-insensitive)
         if (apiKeyHeaderName && apiKeyHeaderName.toLowerCase() === 'authorization' &&
-            apiKeyValue !== null && apiKeyValue !== '') {
-            updatedApiKeyValue = `Bearer ${updatedApiKeyValue}`;
-        } else if ((llmProviderName === 'MistralAI' || llmProviderName === 'OpenAI') &&
             apiKeyValue !== null && apiKeyValue !== '') {
             updatedApiKeyValue = `Bearer ${updatedApiKeyValue}`;
         }
