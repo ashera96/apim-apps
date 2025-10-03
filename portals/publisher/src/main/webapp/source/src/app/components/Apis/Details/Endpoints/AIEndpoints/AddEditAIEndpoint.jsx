@@ -35,6 +35,8 @@ import {
     Dialog,
     DialogTitle,
     DialogContent,
+    FormLabel,
+    Autocomplete,
 } from '@mui/material';
 import CONSTS from 'AppData/Constants';
 import { Link, useHistory } from 'react-router-dom';
@@ -52,6 +54,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import SettingsIcon from '@mui/icons-material/Settings';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import Progress from 'AppComponents/Shared/Progress';
 import AdvanceEndpointConfig from '../AdvancedConfig/AdvanceEndpointConfig';
 
 const PREFIX = 'AddEditAIEndpoint';
@@ -268,6 +271,10 @@ const AddEditAIEndpoint = ({
     const [secretKey, setSecretKey] = useState(null);
     const [region, setRegion] = useState(null);
     const [showApiKey, setShowApiKey] = useState(false);
+    const [llmProviders, setLLMProviders] = useState([]);
+    const [selectedProvider, setSelectedProvider] = useState(null);
+    const [selectedModel, setSelectedModel] = useState(null);
+    const [apiKeyHeaderName, setApiKeyHeaderName] = useState(null);
 
     const subtypeConfig = apiObject.subtypeConfiguration && JSON.parse(apiObject.subtypeConfiguration.configuration);
     const llmProviderName = subtypeConfig ? subtypeConfig.llmProviderName : null;
@@ -386,6 +393,27 @@ const AddEditAIEndpoint = ({
             }
         }
     }, [endpointId]);
+
+    useEffect(() => {
+        API.getLLMProviders().then((response) => {
+            setLLMProviders(response.body);
+        }).catch((error) => {
+            if (error.response) {
+                Alert.error(error.response.body.description);
+            } else {
+                Alert.error(intl.formatMessage({
+                    id: 'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI.LLM.Provider.fetch.error',
+                    defaultMessage: 'Something went wrong while fetching LLM Providers',
+                }));
+            }
+        });
+    }, []);
+
+    const getUniqueProviders = () => {
+        if (!llmProviders || !llmProviders.list) return [];
+        const providerNames = new Set(llmProviders.list.map((p) => p.name));
+        return [...providerNames];
+    };
 
     useEffect(() => {
         // Skip if editing (no need to load all endpoints when editing)
@@ -859,12 +887,20 @@ const AddEditAIEndpoint = ({
                 : null,
     };
 
+    useEffect(() => {
+        setApiKeyHeaderName(apiKeyParamConfig.authHeader || apiKeyParamConfig.authQueryParam);
+    }, [apiKeyParamConfig]);
+
     const IS_APIKEY_AUTH_ENABLED = (config) =>
         config.authenticationConfiguration?.enabled === true &&
         config.authenticationConfiguration?.type === "apikey";
     const IS_AWS_SIGV4_AUTH_ENABLED = (config) =>
         config.authenticationConfiguration?.enabled === true &&
         config.authenticationConfiguration?.type === "aws";
+
+    if (llmProviders.length === 0) {
+        return (<Progress />); 
+    }
     return (
         <StyledGrid container justifyContent='center'>
             <Grid item sm={12} md={12} lg={8}>
@@ -937,6 +973,133 @@ const AddEditAIEndpoint = ({
 
                         {/* Main Form Grid */}
                         <Grid container spacing={2}>
+                            {llmProviders && (<Grid item xs={6}>
+                                <FormControl component='fieldset' fullWidth>
+                                    <FormLabel component='legend' sx={{ width: '100%' }}>
+                                        <Autocomplete
+                                            fullWidth
+                                            id='AI-providers-autocomplete'
+                                            options={getUniqueProviders()}
+                                            noOptionsText='No AI Service Provider defined'
+                                            value={selectedProvider}
+                                            onChange={(e, newValue) => {
+                                                setSelectedProvider(newValue);
+                                            }}
+                                            renderOption={(options, provider) => (
+                                                <li {...options}>
+                                                    {provider}
+                                                </li>
+                                            )}
+                                            renderInput={(params) => (
+                                                <TextField {...params}
+                                                    fullWidth
+                                                    // label={llmProviders.list.length !== 0 ? (
+                                                    //     <>
+                                                    //         <FormattedMessage
+                                                    //             id={'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI.'
+                                                    //             + 'AI.provider'}
+                                                    //             defaultMessage='AI Service Provider'
+                                                    //         />
+                                                    //         <sup className={classes.mandatoryStar}>*</sup>
+                                                    //     </>
+                                                    // ) : (
+                                                    //     <FormattedMessage
+                                                    //         id={'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI'
+                                                    //             +'.AI.provider.empty'}
+                                                    //         defaultMessage='No AI Service Provider defined.'
+                                                    //     />
+                                                    // )
+                                                    // }
+                                                    placeholder={intl.formatMessage({
+                                                        id: 'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI'
+                                                        + '.AI.provider.placeholder',
+                                                        defaultMessage: 'Search AI Service Provider'
+                                                    })}
+                                                    margin='dense'
+                                                    variant='outlined'
+                                                    id='APIProvider'
+                                                />
+                                            )}
+                                        />
+                                    </FormLabel>
+                                </FormControl>
+                            </Grid>)}
+                            {llmProviders && (<Grid item xs={6}>
+                                <FormControl component='fieldset' fullWidth>
+                                    <FormLabel component='legend' sx={{ width: '100%' }}>
+                                        <Autocomplete
+                                            fullWidth
+                                            id='AI-model-autocomplete'
+                                            options={
+                                                llmProviders.list.filter((model) => model.name === selectedProvider)
+                                            }
+                                            noOptionsText='No AI Service Provider selected'
+                                            getOptionLabel={(option) =>
+                                                option.apiVersion
+                                            }
+                                            value={selectedModel}
+                                            onChange={(e, newValue) => {
+                                                setSelectedModel(newValue);
+                                                if (newValue) {
+                                                    API.getLLMProviderEndpointConfiguration(newValue.id)
+                                                        .then((response) => {
+                                                            if (response.body) {
+                                                                setEndpointConfiguration(response.body);
+                                                            }
+                                                        }).catch((error) => {
+                                                            if (error.response) {
+                                                                Alert.error(error.response.body.description);
+                                                            } else {
+                                                                Alert.error(intl.formatMessage({
+                                                                    id: 'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI'
+                                                                    + '.LLMProvider.Endpoint.Configuration.fetch.'
+                                                                    + 'error',
+                                                                    defaultMessage: 'Something went wrong while ' +
+                                                                    'fetching LLM Provider Endpoint Configuration',
+                                                                }));
+                                                            }
+                                                        });
+                                                }
+                                            }}
+                                            renderOption={(options, option) => (
+                                                <li {...options}>
+                                                    {option.apiVersion}
+                                                </li>
+                                            )}
+                                            renderInput={(params) => (
+                                                <TextField {...params}
+                                                    fullWidth
+                                                    // label={llmProviders.list.length !== 0 ? (
+                                                    //     <>
+                                                    //         <FormattedMessage
+                                                    //             id={'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI'
+                                                    //             + '.AI.model'}
+                                                    //             defaultMessage='API version'
+                                                    //         />
+                                                    //         <sup className={classes.mandatoryStar}>*</sup>
+                                                    //     </>
+                                                    // ) : (
+                                                    //     <FormattedMessage
+                                                    //         id={'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI'
+                                                    //             + '.AI.model.empty'}
+                                                    //         defaultMessage='No AI Service Provider selected.'
+                                                    //     />
+                                                    // )
+                                                    // }
+                                                    placeholder={intl.formatMessage({
+                                                        id: 'Apis.Create.AIAPI.Steps.ProvideAIOpenAPI'
+                                                        + '.AI.model.placeholder',
+                                                        defaultMessage: 'Search API version'
+                                                    })}
+                                                    margin='dense'
+                                                    variant='outlined'
+                                                    id='APIModelVersion'
+                                                />
+                                            )}
+                                        />
+                                    </FormLabel>
+                                </FormControl>
+                            </Grid>)}
                             <Grid item xs={6}>
                                 <FormControl fullWidth>
                                     <TextField
@@ -1046,7 +1209,6 @@ const AddEditAIEndpoint = ({
                                 <>
                                     <Grid item xs={6}>
                                         <TextField
-                                            disabled
                                             label={apiKeyParamConfig.authHeader ? (
                                                 <FormattedMessage
                                                     id='Apis.Details.Endpoints.AIEndpoints.Edit.api.key.header'
@@ -1060,8 +1222,8 @@ const AddEditAIEndpoint = ({
                                             )}
                                             fullWidth
                                             id='api-key-id'
-                                            value={apiKeyParamConfig.authHeader ||
-                                                apiKeyParamConfig.authQueryParam}
+                                            value={apiKeyHeaderName}
+                                            onChange={(e) => setApiKeyHeaderName(e.target.value)}
                                             placeholder={apiKeyParamConfig.authHeader ||
                                                 apiKeyParamConfig.authQueryParam}
                                             InputLabelProps={{

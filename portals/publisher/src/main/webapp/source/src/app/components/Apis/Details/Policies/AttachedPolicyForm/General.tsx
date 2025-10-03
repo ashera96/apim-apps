@@ -46,6 +46,8 @@ import ModelRoundRobin from '../CustomPolicies/ModelRoundRobin';
 import ModelWeightedRoundRobin from '../CustomPolicies/ModelWeightedRoundRobin';
 import ModelFailover from '../CustomPolicies/ModelFailover';
 import { Editor } from '@monaco-editor/react';
+import IntelligentModelRouting from '../CustomPolicies/IntelligentModelRouting';
+
 
 const PREFIX = 'General';
 
@@ -136,7 +138,8 @@ const General: FC<GeneralProps> = ({
         if (
             (policyObj && policyObj.name === 'modelRoundRobin') ||
             (policyObj && policyObj.name === 'modelWeightedRoundRobin') ||
-            (policyObj && policyObj.name === 'modelFailover')
+            (policyObj && policyObj.name === 'modelFailover') ||
+            (policyObj && policyObj.name === 'intelligentModelRouting')
         ) {
             setManual(true);
         }
@@ -250,7 +253,7 @@ const General: FC<GeneralProps> = ({
             }
         });
 
-        if (policyObj.name === 'modelRoundRobin' || policyObj.name === 'modelWeightedRoundRobin' || policyObj.name === 'modelFailover') {
+        if (policyObj.name === 'modelRoundRobin' || policyObj.name === 'modelWeightedRoundRobin' || policyObj.name === 'modelFailover' || policyObj.name === 'intelligentModelRouting') {
             updateCandidates[policySpec.policyAttributes[0].name] = manualPolicyConfig;
         }
 
@@ -480,6 +483,12 @@ const General: FC<GeneralProps> = ({
                     )}
                     {(isManual && policyObj.name === 'modelFailover') && (
                         <ModelFailover
+                            setManualPolicyConfig={setManualPolicyConfig}
+                            manualPolicyConfig={getValue(policySpec.policyAttributes[0])}
+                        />
+                    )}
+                    {(isManual && policyObj.name === 'intelligentModelRouting') && (
+                        <IntelligentModelRouting
                             setManualPolicyConfig={setManualPolicyConfig}
                             manualPolicyConfig={getValue(policySpec.policyAttributes[0])}
                         />

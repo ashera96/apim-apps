@@ -25,14 +25,44 @@ export type Endpoint = {
 }
 
 export type ModelData = {
-    vendor: string;
+    vendor?: string;
+    provider?: string;
     model: string;
     endpointId: string;
     endpointName: string;
     weight?: number;
+    name?: string;
+    context?: string;
+}
+
+// New types for intelligent routing
+export type DefaultModel = {
+    provider: string;
+    model: string;
+    endpointId: string;
+}
+
+export type Category = {
+    provider: string;
+    name: string;
+    context: string;
+    model: string;
+    endpointId: string;
+}
+
+export type EnvironmentConfig = {
+    defaultModel: DefaultModel;
+    categories: Category[];
+}
+
+export type IntelligentRoutingConfig = {
+    production: EnvironmentConfig;
+    sandbox: EnvironmentConfig;
+    suspendDuration?: number;
 }
 
 export type ModelVendor = {
     vendor: string;
+    provider?: string;
     values: string[];
 }
