@@ -38,12 +38,11 @@ import { API_SECURITY_API_KEY }
 import ProvideAIOpenAPI from './Steps/ProvideAIOpenAPI';
 
 /**
-     *
-     * Reduce the events triggered from API input fields to current state
-     * @param {*} currentState
-     * @param {*} inputAction
-     * @returns
-     */
+ * Reduce the events triggered from API input fields to current state
+ * @param {*} currentState current state of the API inputs
+ * @param {*} inputAction action triggered from the input fields
+ * @returns {*} returns the updated state
+ */
 function apiInputsReducer(currentState, inputAction) {
     const { action, value } = inputAction;
     switch (action) {

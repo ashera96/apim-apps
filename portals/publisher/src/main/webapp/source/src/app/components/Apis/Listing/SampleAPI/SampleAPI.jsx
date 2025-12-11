@@ -114,9 +114,31 @@ const SampleAPI = (props) => {
         setShowStatus(true);
         const restApi = new API();
 
+        // Validate that defaultSubscriptionPolicy exists in available policies
+        let selectedSubscriptionPolicy = defaultSubscriptionPolicy || 'Unlimited';
+        try {
+            const response = await API.policies('subscription');
+            const allPolicies = response.body.list;
+            if (allPolicies.length > 0) {
+                // Helper to check if a policy exists
+                const findPolicy = (policyName) => allPolicies.find((p) => p.name === policyName);
+
+                // Priority: defaultSubscriptionPolicy -> Unlimited -> first available
+                const policy =
+                    (defaultSubscriptionPolicy && findPolicy(defaultSubscriptionPolicy)) ||
+                    findPolicy('Unlimited') ||
+                    allPolicies[0];
+
+                selectedSubscriptionPolicy = policy.name;
+            } else {
+                selectedSubscriptionPolicy = 'Unlimited'; // Fallback to Unlimited if no policies available
+            }
+        } catch (error) {
+            console.error('Error fetching subscription policies:', error);
+        }
+
         const sampleAPIObj = new API(getSampleAPIData(defaultAdvancePolicy || 'Unlimited',
-            defaultSubscriptionPolicy || 'Unlimited'));
-        
+            selectedSubscriptionPolicy));
         // Check scopes for 1st API call (Create API)
         if (AuthManager.isRestricted(['apim:api_create', 'apim:api_manage'])) {
             // Mark all tasks as completed with permission error and skip the flow
